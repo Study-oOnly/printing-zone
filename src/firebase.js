@@ -16,9 +16,10 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// কাস্টমারের অ্যাকাউন্ট বানানোর জন্য আলাদা কানেকশন (অ্যাডমিন যেন লগআউট না হয়)
+// A second connection, used to create customer accounts
+// without logging out the current user (admin or visitor).
 const secondaryApp = initializeApp(firebaseConfig, "secondary");
 export const secondaryAuth = getAuth(secondaryApp);
+export const secondaryDb = getFirestore(secondaryApp);
 
-// তোমার অ্যাডমিন UID
 export const ADMIN_UID = "TRaI5bxcFoVOImWxNyBERu8y7243";

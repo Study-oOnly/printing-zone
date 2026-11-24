@@ -1,6 +1,6 @@
 import { sameName } from "./names";
 
-// প্রিন্টের রেট (প্রতি পৃষ্ঠা)
+// Normal print rates (per page)
 const RATES = {
   "BW-S": 2.5,
   "BW-B": 3.5,
@@ -10,7 +10,19 @@ const RATES = {
   "C-P": 6.0,
 };
 
+// Extra services (price per page / piece, side option does not matter)
+export const SERVICE_RATES = {
+  SCAN: 2,
+  PASSPORT: 5,
+  GLOSSY: 6,
+};
+
+export function isService(printType) {
+  return SERVICE_RATES[printType] !== undefined;
+}
+
 export function getRate(printType, side) {
+  if (isService(printType)) return SERVICE_RATES[printType];
   return RATES[`${printType}-${side}`] ?? 0;
 }
 
@@ -18,14 +30,14 @@ export function calcTotal(pages, unitCost) {
   return Number(pages || 0) * Number(unitCost || 0);
 }
 
-// কোনো কাস্টমারের মোট বকেয়া (Partial Payment-এর মাইনাস ধরে), নামের বড়-ছোট হাত উপেক্ষা করে
+// Total unpaid for a customer (partial payments are negative), case-insensitive name match
 export function calcUnpaid(entries, customerName) {
   return entries
     .filter((e) => sameName(e.customerName, customerName) && e.status === "Unpaid")
     .reduce((sum, e) => sum + (e.totalCost || 0), 0);
 }
 
-// আজকের তারিখ dd/MM/yyyy ফরম্যাটে
+// Today's date in dd/MM/yyyy
 export function todayStr() {
   const d = new Date();
   const dd = String(d.getDate()).padStart(2, "0");

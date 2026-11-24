@@ -20,7 +20,13 @@ export default function App() {
     return unsub;
   }, []);
 
-  if (loading) return <div className="container">লোড হচ্ছে...</div>;
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#f1f3fd", fontFamily: "'Plus Jakarta Sans', Arial, sans-serif", color: "#5d607a", fontWeight: 600 }}>
+        Loading...
+      </div>
+    );
+  }
 
   if (!user) {
     return view === "login"

@@ -19,11 +19,11 @@ export default function UploadsList() {
 
   return (
     <div className="card">
-      <h2>কাস্টমারের পাঠানো ফাইল ({items.length})</h2>
+      <h2>Files Sent by Customers ({items.length})</h2>
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>সময়</th><th>নাম</th><th>ব্যাচ</th><th>WhatsApp</th><th>ফাইল</th><th></th></tr>
+            <tr><th>Time</th><th>Name</th><th>Batch</th><th>WhatsApp</th><th>File</th><th></th></tr>
           </thead>
           <tbody>
             {items.map((u) => (
@@ -34,12 +34,15 @@ export default function UploadsList() {
                 <td>{u.whatsapp ? <a href={wa(u.whatsapp)} target="_blank" rel="noreferrer">{u.whatsapp}</a> : "-"}</td>
                 <td><a href={u.fileUrl} target="_blank" rel="noreferrer">{u.fileName}</a></td>
                 <td>
-                  <button className="red" onClick={() => confirm("মুছবেন?") && deleteDoc(doc(db, "uploads", u.id))}>
-                    মুছুন
+                  <button className="red" onClick={() => confirm("Delete this file record?") && deleteDoc(doc(db, "uploads", u.id))}>
+                    Delete
                   </button>
                 </td>
               </tr>
             ))}
+            {items.length === 0 && (
+              <tr><td colSpan="6">No files yet.</td></tr>
+            )}
           </tbody>
         </table>
       </div>

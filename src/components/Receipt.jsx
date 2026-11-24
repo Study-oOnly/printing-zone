@@ -44,7 +44,7 @@ export default function Receipt({ entries, customerName, phone, onClose }) {
     saveUrl(await makeDataUrl());
   }
 
-  // ছবি শেয়ার: ফোনে শেয়ার মেনু খুলবে, না পারলে ছবি ডাউনলোড হবে
+  // Share the image: opens the share sheet on phones, otherwise downloads it
   async function shareImage() {
     setNote("");
     try {
@@ -59,16 +59,16 @@ export default function Receipt({ entries, customerName, phone, onClose }) {
         });
       } else {
         saveUrl(url);
-        setNote("এই ডিভাইসে সরাসরি শেয়ার হয় না। ছবি ডাউনলোড হয়েছে, WhatsApp-এ নিজে অ্যাটাচ করে পাঠান।");
+        setNote("Direct sharing is not supported on this device. The image was downloaded, please attach it in WhatsApp manually.");
       }
     } catch (err) {
-      if (err && err.name === "AbortError") return; // নিজে বাতিল করলে কিছু না
+      if (err && err.name === "AbortError") return;
       console.error(err);
-      setNote("শেয়ার করা যায়নি। Download as JPG ব্যবহার করুন।");
+      setNote("Could not share. Please use Download as JPG.");
     }
   }
 
-  // লেখা শেয়ার: কাস্টমারের নম্বরসহ WhatsApp খুলবে
+  // Share text: opens WhatsApp with the customer's number and a ready message
   function shareText() {
     const lines = [];
     lines.push("*PRINTING ZONE*");
@@ -139,7 +139,7 @@ export default function Receipt({ entries, customerName, phone, onClose }) {
           <button className="green" onClick={download}>Download as JPG</button>
           <button onClick={shareImage}>Share Image</button>
           <button onClick={shareText}>Share Text</button>
-          <button className="gray" onClick={onClose}>বন্ধ করুন</button>
+          <button className="gray" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>

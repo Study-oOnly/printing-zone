@@ -5,7 +5,7 @@ import {
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { getRate, calcTotal, calcUnpaid, todayStr } from "../utils/pricing";
+import { getRate, calcTotal, calcUnpaid, todayStr, isService } from "../utils/pricing";
 import { sameName, normName } from "../utils/names";
 import { exportEntries, exportCustomers } from "../utils/exportCsv";
 import UploadsList from "../components/UploadsList";
@@ -44,6 +44,10 @@ export default function Admin() {
   function setField(name, value) {
     setForm((f) => {
       const next = { ...f, [name]: value };
+      if (name === "printType") {
+        if (isService(value)) next.side = "-";
+        else if (next.side === "-") next.side = "S";
+      }
       if (name === "printType" || name === "side") {
         next.unitCost = getRate(next.printType, next.side);
       }
@@ -55,7 +59,7 @@ export default function Admin() {
   const name = form.customerName.trim();
   const customerUnpaid = name ? calcUnpaid(entries, name) : 0;
 
-  // বড়-ছোট হাত মিলিয়ে একই নাম একবারই দেখাবে
+  // same name in different letter case appears only once
   const customerNames = useMemo(() => {
     const map = new Map();
     entries.forEach((e) => {
@@ -79,19 +83,16 @@ export default function Admin() {
     );
   });
 
-  // নামের জন্য কাস্টমার অ্যাকাউন্ট থাকলে তার uid
   function uidFor(n) {
     const acc = accounts.find((a) => sameName(a.name, n));
     return acc ? acc.id : "";
   }
 
-  // কাস্টমার অ্যাকাউন্ট থাকলে তার WhatsApp নম্বর
   function phoneFor(n) {
     const acc = accounts.find((a) => sameName(a.name, n));
     return acc ? acc.whatsapp || "" : "";
   }
 
-  // আগে থেকে এই নামে যেভাবে লেখা আছে সেভাবেই লিখবে (rafi → Rafi)
   function canonicalName(n) {
     const found = customerNames.find((x) => sameName(x, n));
     return found || n;
@@ -99,7 +100,7 @@ export default function Admin() {
 
   async function saveEntry(e) {
     e.preventDefault();
-    if (!name || !form.pages) return alert("কাস্টমারের নাম ও পৃষ্ঠা সংখ্যা দিন");
+    if (!name || !form.pages) return alert("Please enter customer name and pages/quantity");
     const finalName = canonicalName(name);
     await addDoc(collection(db, "entries"), {
       date: form.date,
@@ -118,8 +119,8 @@ export default function Admin() {
   }
 
   async function partialPayment() {
-    if (!name) return alert("আগে কাস্টমারের নাম লিখুন");
-    const amount = Number(prompt("কত টাকা দিয়েছে?"));
+    if (!name) return alert("Enter the customer name first");
+    const amount = Number(prompt("How much did the customer pay?"));
     if (!amount || amount <= 0) return;
     const finalName = canonicalName(name);
     await addDoc(collection(db, "entries"), {
@@ -138,24 +139,24 @@ export default function Admin() {
   }
 
   async function markAllPaid() {
-    if (!name) return alert("আগে কাস্টমারের নাম লিখুন");
+    if (!name) return alert("Enter the customer name first");
     const unpaid = entries.filter((e) => sameName(e.customerName, name) && e.status === "Unpaid");
-    if (unpaid.length === 0) return alert("কোনো বকেয়া নেই");
-    if (!confirm(`${name}-এর ${unpaid.length}টি এন্ট্রি Paid করবেন?`)) return;
+    if (unpaid.length === 0) return alert("No unpaid entries");
+    if (!confirm(`Mark ${unpaid.length} entries of ${name} as Paid?`)) return;
     const batch = writeBatch(db);
     unpaid.forEach((e) => batch.update(doc(db, "entries", e.id), { status: "Paid" }));
     await batch.commit();
   }
 
   function openReceipt() {
-    if (!name) return alert("আগে কাস্টমারের নাম লিখুন");
+    if (!name) return alert("Enter the customer name first");
     if (!entries.some((e) => sameName(e.customerName, name) && e.status === "Unpaid"))
-      return alert("এই কাস্টমারের কোনো Unpaid আইটেম নেই");
+      return alert("This customer has no unpaid items");
     setShowReceipt(true);
   }
 
   async function removeEntry(id) {
-    if (confirm("এই এন্ট্রি মুছে ফেলবেন?")) await deleteDoc(doc(db, "entries", id));
+    if (confirm("Delete this entry?")) await deleteDoc(doc(db, "entries", id));
   }
 
   return (
@@ -163,16 +164,16 @@ export default function Admin() {
       <div className="topbar">
         <h1>Printing Zone (Admin)</h1>
         <div className="actions" style={{ marginTop: 0 }}>
-          <button className="green" onClick={() => exportEntries(entries)}>ব্যাকআপ: এন্ট্রি</button>
-          <button className="green" onClick={() => exportCustomers(accounts)}>ব্যাকআপ: কাস্টমার</button>
-          <button className="gray" onClick={() => signOut(auth)}>লগআউট</button>
+          <button className="green" onClick={() => exportEntries(entries)}>Backup: Entries</button>
+          <button className="green" onClick={() => exportCustomers(accounts)}>Backup: Customers</button>
+          <button className="gray" onClick={() => signOut(auth)}>Logout</button>
         </div>
       </div>
 
       <UploadsList />
 
       <form className="card" onSubmit={saveEntry}>
-        <h2>নতুন এন্ট্রি</h2>
+        <h2>New Entry</h2>
         <div className="grid">
           <div>
             <label>Date</label>
@@ -196,19 +197,28 @@ export default function Admin() {
               onChange={(e) => setField("documentName", e.target.value)} />
           </div>
           <div>
-            <label>Print Type</label>
+            <label>Print Type / Service</label>
             <select value={form.printType} onChange={(e) => setField("printType", e.target.value)}>
-              <option>BW</option><option>C</option>
+              <option value="BW">BW (Black &amp; White)</option>
+              <option value="C">C (Color)</option>
+              <option value="SCAN">Scan</option>
+              <option value="PASSPORT">Passport Photo</option>
+              <option value="GLOSSY">Glossy Paper Print</option>
             </select>
           </div>
           <div>
             <label>Side/Option</label>
-            <select value={form.side} onChange={(e) => setField("side", e.target.value)}>
-              <option>S</option><option>B</option><option>P</option><option>C</option>
+            <select value={form.side} onChange={(e) => setField("side", e.target.value)}
+              disabled={isService(form.printType)}>
+              <option value="S">S (Single side)</option>
+              <option value="B">B (Both side)</option>
+              <option value="P">P (Photo)</option>
+              <option value="C">C (Cover page)</option>
+              {isService(form.printType) && <option value="-">-</option>}
             </select>
           </div>
           <div>
-            <label>Pages</label>
+            <label>Pages / Qty</label>
             <input type="number" value={form.pages}
               onChange={(e) => setField("pages", e.target.value)} />
           </div>
@@ -229,18 +239,18 @@ export default function Admin() {
           </div>
         </div>
         <div className="actions">
-          <button type="submit">এন্ট্রি সেভ করুন</button>
+          <button type="submit">Save Entry</button>
           <button type="button" className="gray" onClick={partialPayment}>Partial Payment</button>
           <button type="button" className="green" onClick={markAllPaid}>Mark All Unpaid as Paid</button>
-          <button type="button" onClick={openReceipt}>রিসিপ্ট</button>
+          <button type="button" onClick={openReceipt}>Receipt</button>
         </div>
       </form>
 
       <CustomerAccounts entries={entries} names={customerNames} />
 
       <div className="card">
-        <h2>সব এন্ট্রি ({filtered.length})</h2>
-        <input placeholder="নাম, ডকুমেন্ট বা Paid/Unpaid দিয়ে সার্চ করুন..."
+        <h2>All Entries ({filtered.length})</h2>
+        <input placeholder="Search by name, document or Paid/Unpaid..."
           value={search} onChange={(e) => setSearch(e.target.value)} />
         <br /><br />
         <div className="table-wrap">
@@ -263,7 +273,7 @@ export default function Admin() {
                   <td>{e.unitCost}</td>
                   <td>৳ {e.totalCost}</td>
                   <td className={e.status === "Paid" ? "paid" : "unpaid"}>{e.status}</td>
-                  <td><button className="red" onClick={() => removeEntry(e.id)}>মুছুন</button></td>
+                  <td><button className="red" onClick={() => removeEntry(e.id)}>Delete</button></td>
                 </tr>
               ))}
             </tbody>
