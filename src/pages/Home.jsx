@@ -3,6 +3,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { CLOUD_NAME, UPLOAD_PRESET } from "../cloudinary";
 import { createCustomerAccount, isValidPhone, resolveIdentity } from "../utils/signup";
+import ChatBox from "../components/ChatBox";
 
 const MAX_MB = 10;
 
@@ -423,6 +424,7 @@ export default function Home({ onLogin }) {
           <div>WhatsApp: 01644059191<br />bKash: 01816657670</div>
         </div>
       </footer>
+      <ChatBox />
     </div>
   );
 }
