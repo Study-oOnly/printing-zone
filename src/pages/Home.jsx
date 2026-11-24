@@ -3,7 +3,6 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { CLOUD_NAME, UPLOAD_PRESET } from "../cloudinary";
 import { createCustomerAccount, isValidPhone, resolveIdentity } from "../utils/signup";
-import ChatBox from "../components/ChatBox";
 
 const MAX_MB = 10;
 
@@ -100,19 +99,78 @@ function PrinterArt() {
 
 function Badge() {
   return (
-    <svg className="pb-badge" viewBox="0 0 100 100" aria-hidden="true">
+    <svg className="pb-pa" viewBox="0 0 120 120" aria-hidden="true">
+      <style>{`
+        .pb-pa { width: clamp(84px, 10.5vw, 118px); height: auto; aspect-ratio: 1 / 1; flex: none; overflow: visible; }
+        .pa-in { animation: paIn 4s ease-in-out infinite; }
+        .pa-out { animation: paOut 4s ease-in-out infinite; }
+        .pa-led { animation: paLed 0.8s steps(1) infinite; }
+        @keyframes paIn {
+          0%   { transform: translateY(-16px); opacity: 0; }
+          10%  { transform: translateY(0); opacity: 1; }
+          38%  { transform: translateY(36px); opacity: 1; }
+          39%  { transform: translateY(36px); opacity: 0; }
+          100% { transform: translateY(36px); opacity: 0; }
+        }
+        @keyframes paOut {
+          0%   { transform: translateY(0); opacity: 0; }
+          38%  { transform: translateY(0); opacity: 0; }
+          39%  { transform: translateY(0); opacity: 1; }
+          66%  { transform: translateY(34px); opacity: 1; }
+          90%  { transform: translateY(34px); opacity: 1; }
+          97%  { transform: translateY(34px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 0; }
+        }
+        @keyframes paLed {
+          0%   { opacity: 1; }
+          50%  { opacity: 0.25; }
+        }
+      `}</style>
       <defs>
-        <path id="pbCirclePath" d="M50,50 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0" />
+        <linearGradient id="paBody" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#e4e7fb" />
+        </linearGradient>
+        <linearGradient id="paTop" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#4f3df5" />
+          <stop offset="1" stopColor="#7c5cff" />
+        </linearGradient>
+        <linearGradient id="paArt" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#4f3df5" />
+          <stop offset="1" stopColor="#ec4899" />
+        </linearGradient>
       </defs>
-      <text fontSize="11.5" fontWeight="700" fill="#0f0d2e" letterSpacing="2.4" fontFamily="Arial, sans-serif">
-        <textPath href="#pbCirclePath">PRINT • COPY • SCAN • BIND •</textPath>
-      </text>
-      <path d="M40 40h20v20H40z" fill="none" stroke="#4f3df5" strokeWidth="3" strokeLinejoin="round" />
-      <path d="M44 40v-6h12v6M44 60v6h12v-6" fill="none" stroke="#4f3df5" strokeWidth="3" strokeLinejoin="round" />
+
+      {/* white page going in (behind the printer) */}
+      <g className="pa-in">
+        <rect x="38" y="8" width="44" height="34" rx="3" fill="#ffffff" stroke="#cfd3f3" />
+        <rect x="44" y="14" width="20" height="4" rx="2" fill="#cfd3f3" />
+        <rect x="44" y="23" width="32" height="3" rx="1.5" fill="#e4e6f8" />
+        <rect x="44" y="30" width="28" height="3" rx="1.5" fill="#e4e6f8" />
+      </g>
+
+      {/* coloured page coming out (behind the printer) */}
+      <g className="pa-out">
+        <rect x="38" y="46" width="44" height="36" rx="3" fill="#ffffff" stroke="#d9dcf5" />
+        <rect x="42" y="50" width="36" height="10" rx="2" fill="url(#paArt)" />
+        <circle cx="50" cy="69" r="5" fill="#22c55e" />
+        <circle cx="61" cy="69" r="5" fill="#f59e0b" />
+        <circle cx="72" cy="69" r="5" fill="#3b82f6" />
+        <rect x="42" y="76" width="36" height="3" rx="1.5" fill="#ec4899" opacity="0.85" />
+      </g>
+
+      {/* printer body */}
+      <rect x="14" y="44" width="92" height="40" rx="10" fill="url(#paBody)" stroke="#d3d7f3" strokeWidth="1.5" />
+      <rect x="14" y="44" width="92" height="16" rx="10" fill="url(#paTop)" />
+      <rect x="14" y="52" width="92" height="8" fill="url(#paTop)" />
+      <rect x="32" y="44" width="56" height="3" rx="1.5" fill="#0f0d2e" />
+      <rect x="24" y="66" width="30" height="8" rx="4" fill="#0f0d2e" />
+      <circle className="pa-led" cx="92" cy="70" r="3.5" fill="#22c55e" />
+      <circle cx="82" cy="70" r="3.5" fill="#fbbf24" />
+      <rect x="30" y="80" width="60" height="4" rx="2" fill="#1b1850" />
     </svg>
   );
 }
-
 const FEATS = [
   ["Fast, Crisp & Clean Prints", "M13 2L3 14h8l-1 8 10-12h-8z"],
   ["Low price guarantee", "M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"],
@@ -424,7 +482,6 @@ export default function Home({ onLogin }) {
           <div>WhatsApp: 01644059191<br />bKash: 01816657670</div>
         </div>
       </footer>
-      <ChatBox />
     </div>
   );
 }
