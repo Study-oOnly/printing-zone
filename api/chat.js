@@ -57,4 +57,27 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SHOP_INFO }] },
           contents,
-          generationConfig: {
+          generationConfig: { maxOutputTokens: 2000, temperature: 0.4 },
+        }),
+      }
+    );
+
+    const data = await r.json();
+    if (!r.ok) {
+      console.error(data);
+      return res.status(502).json({ error: "ai error", detail: data?.error?.message || "" });
+    }
+
+    const text = (data?.candidates?.[0]?.content?.parts || [])
+      .map((p) => p.text || "")
+      .join("")
+      .trim();
+
+    return res.status(200).json({
+      reply: text || "Sorry, I could not answer that. Please WhatsApp us: 01644059191",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "server error" });
+  }
+}
