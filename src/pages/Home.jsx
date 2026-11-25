@@ -3,6 +3,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { CLOUD_NAME, UPLOAD_PRESET } from "../cloudinary";
 import { createCustomerAccount, isValidPhone, resolveIdentity } from "../utils/signup";
+import ChatBox from "../components/ChatBox";
 
 const MAX_MB = 10;
 
@@ -171,6 +172,7 @@ function Badge() {
     </svg>
   );
 }
+
 const FEATS = [
   ["Fast, Crisp & Clean Prints", "M13 2L3 14h8l-1 8 10-12h-8z"],
   ["Low price guarantee", "M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"],
@@ -482,6 +484,7 @@ export default function Home({ onLogin }) {
           <div>WhatsApp: 01644059191<br />bKash: 01816657670</div>
         </div>
       </footer>
+      <ChatBox />
     </div>
   );
 }
